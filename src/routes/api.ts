@@ -399,21 +399,32 @@ router.put('/donations/:id/amount', async (req: Request, res) => {
     const project = await projectService.getProject(donation.project_id);
     await userStateService.clearState(donation.line_user_id, donation.source_id);
 
-    const thankYouSetting = await Setting.findOne({ key: 'thank_you_message' }).lean();
-    const thankYouMessage = (thankYouSetting?.value || 'ขอบคุณสำหรับการบริจาค')
-      .toString()
-      .trim() || 'ขอบคุณสำหรับการบริจาค';
-    const displayName = donation.display_name || 'ผู้บริจาค';
-    const projectName = project?.name || 'โปรเจกต์';
-    const thankYouFlex = lineService.createDonationThankYouFlex(
-      displayName,
-      amount,
-      project?.destination,
-      projectName,
-      thankYouMessage
-    );
+    // Get LINE user display name
+    let displayName = 'ผู้บริจาค';
+    try {
+      const profile = await lineService.getProfile(donation.line_user_id);
+      displayName = profile.displayName || donation.display_name || 'ผู้บริจาค';
+    } catch (profileError) {
+      displayName = donation.display_name || 'ผู้บริจาค';
+    }
 
-    res.json({ success: true, data: confirmed, thankYouFlex });
+    // Send confirmation message
+    let messageText = `ขอบคุณสำหรับการบริจาค\nคุณ ${displayName}\nยอดรวม: ${amount.toLocaleString()} บาท`;
+    if (project?.destination) {
+      messageText += `\nชื่อผู้รับบริจาค: ${project.destination}`;
+    }
+
+    try {
+      await lineService.pushMessage(donation.line_user_id, [{
+        type: 'text',
+        text: messageText
+      }]);
+    } catch (sendError) {
+      console.error('Failed to send confirmation message:', sendError);
+      // Don't fail the request if message sending fails
+    }
+
+    res.json({ success: true, data: confirmed });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
