@@ -63,7 +63,7 @@ export class LineService {
 
   createProjectListFlex(projects: any[]): FlexMessage {
     const bubbles: FlexBubble[] = projects.map((project): FlexBubble => {
-      const goalRow: FlexBox | null = project.goal_amount
+      const goalRow: FlexBox | null = project.goal_amount && project.goal_amount > 0
         ? {
             type: 'box',
             layout: 'baseline',

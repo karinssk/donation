@@ -408,20 +408,24 @@ router.put('/donations/:id/amount', async (req: Request, res) => {
       displayName = donation.display_name || 'ผู้บริจาค';
     }
 
-    // Send confirmation message
-    let messageText = `ขอบคุณสำหรับการบริจาค\nคุณ ${displayName}\nยอดรวม: ${amount.toLocaleString()} บาท`;
-    if (project?.destination) {
-      messageText += `\nชื่อผู้รับบริจาค: ${project.destination}`;
-    }
+    const thankYouSetting = await Setting.findOne({ key: 'thank_you_message' }).lean();
+    const thankYouMessage = (thankYouSetting?.value || 'ขอบคุณสำหรับการบริจาค')
+      .toString()
+      .trim() || 'ขอบคุณสำหรับการบริจาค';
+    const projectName = project?.name || 'โปรเจกต์';
 
     try {
-      await lineService.pushMessage(donation.line_user_id, [{
-        type: 'text',
-        text: messageText
-      }]);
+      await lineService.pushMessage(donation.line_user_id, [
+        lineService.createDonationThankYouFlex(
+          displayName,
+          amount,
+          project?.destination,
+          projectName,
+          thankYouMessage
+        ),
+      ]);
     } catch (sendError) {
       console.error('Failed to send confirmation message:', sendError);
-      // Don't fail the request if message sending fails
     }
 
     res.json({ success: true, data: confirmed });
