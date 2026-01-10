@@ -62,108 +62,112 @@ export class LineService {
   }
 
   createProjectListFlex(projects: any[]): FlexMessage {
-    const bubbles: FlexBubble[] = projects.map(project => ({
-      type: 'bubble',
-      header: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          {
-            type: 'text',
-            text: (project.name || '').trim(),
-            weight: 'bold',
-            size: 'lg',
-            color: '#1DB446',
-          },
-        ],
-      },
-      body: {
-        type: 'box',
-        layout: 'vertical',
-        contents: [
-          {
-            type: 'text',
-            text: (project.description || 'ไม่มีคำอธิบาย').trim(),
-            wrap: true,
-            size: 'sm',
-            color: '#666666',
-          },
-          {
+    const bubbles: FlexBubble[] = projects.map(project => {
+      const goalRow = project.goal_amount
+        ? {
             type: 'box',
-            layout: 'vertical',
-            margin: 'lg',
+            layout: 'baseline',
             spacing: 'sm',
             contents: [
               {
-                type: 'box',
-                layout: 'baseline',
-                spacing: 'sm',
-                contents: [
-                  {
-                    type: 'text',
-                    text: 'ยอดปัจจุบัน',
-                    color: '#aaaaaa',
-                    size: 'sm',
-                    flex: 2,
-                  },
-                  {
-                    type: 'text',
-                    text: `${project.current_amount?.toLocaleString() || 0} บาท`,
-                    wrap: true,
-                    color: '#666666',
-                    size: 'sm',
-                    flex: 3,
-                    align: 'end',
-                  },
-                ],
+                type: 'text',
+                text: 'เป้าหมาย',
+                color: '#aaaaaa',
+                size: 'sm',
+                flex: 2,
               },
               {
-                type: 'box',
-                layout: 'baseline',
-                spacing: 'sm',
-                contents: [
-                  {
-                    type: 'text',
-                    text: 'เป้าหมาย',
-                    color: '#aaaaaa',
-                    size: 'sm',
-                    flex: 2,
-                  },
-                  {
-                    type: 'text',
-                    text: project.goal_amount
-                      ? `${project.goal_amount.toLocaleString()} บาท`
-                      : 'ไม่จำกัด',
-                    wrap: true,
-                    color: '#666666',
-                    size: 'sm',
-                    flex: 3,
-                    align: 'end',
-                  },
-                ],
+                type: 'text',
+                text: `${project.goal_amount.toLocaleString()} บาท`,
+                wrap: true,
+                color: '#666666',
+                size: 'sm',
+                flex: 3,
+                align: 'end',
               },
             ],
-          },
-        ],
-      },
-      footer: {
-        type: 'box',
-        layout: 'vertical',
-        spacing: 'sm',
-        contents: [
-          {
-            type: 'button',
-            style: 'primary',
-            height: 'sm',
-            action: {
-              type: 'postback',
-              label: 'ทำบุญ',
-              data: `action=select_project&project_id=${project.id}`,
+          }
+        : null;
+
+      return {
+        type: 'bubble',
+        header: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: (project.name || '').trim(),
+              weight: 'bold',
+              size: 'lg',
+              color: '#1DB446',
             },
-          },
-        ],
-      },
-    }));
+          ],
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          contents: [
+            {
+              type: 'text',
+              text: (project.description || 'ไม่มีคำอธิบาย').trim(),
+              wrap: true,
+              size: 'sm',
+              color: '#666666',
+            },
+            {
+              type: 'box',
+              layout: 'vertical',
+              margin: 'lg',
+              spacing: 'sm',
+              contents: [
+                {
+                  type: 'box',
+                  layout: 'baseline',
+                  spacing: 'sm',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: 'ยอดปัจจุบัน',
+                      color: '#aaaaaa',
+                      size: 'sm',
+                      flex: 2,
+                    },
+                    {
+                      type: 'text',
+                      text: `${project.current_amount?.toLocaleString() || 0} บาท`,
+                      wrap: true,
+                      color: '#666666',
+                      size: 'sm',
+                      flex: 3,
+                      align: 'end',
+                    },
+                  ],
+                },
+                ...(goalRow ? [goalRow] : []),
+              ],
+            },
+          ],
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'button',
+              style: 'primary',
+              height: 'sm',
+              action: {
+                type: 'postback',
+                label: 'ทำบุญ',
+                data: `action=select_project&project_id=${project.id}`,
+              },
+            },
+          ],
+        },
+      };
+    });
 
     return {
       type: 'flex',

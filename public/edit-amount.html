@@ -174,9 +174,18 @@
 
         if (data.success) {
           showMessage('แก้ไขยอดเงินสำเร็จ', 'success');
+          if (liff && liff.isInClient && liff.isInClient() && data.thankYouFlex) {
+            try {
+              await liff.sendMessages([data.thankYouFlex]);
+            } catch (sendError) {
+              console.error('Failed to send thank you message:', sendError);
+            }
+          }
           setTimeout(() => {
-            liff.closeWindow();
-          }, 1500);
+            if (liff && liff.closeWindow) {
+              liff.closeWindow();
+            }
+          }, 800);
         } else {
           showMessage('เกิดข้อผิดพลาด: ' + data.error, 'error');
         }

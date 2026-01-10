@@ -399,7 +399,21 @@ router.put('/donations/:id/amount', async (req: Request, res) => {
     const project = await projectService.getProject(donation.project_id);
     await userStateService.clearState(donation.line_user_id, donation.source_id);
 
-    res.json({ success: true, data: confirmed });
+    const thankYouSetting = await Setting.findOne({ key: 'thank_you_message' }).lean();
+    const thankYouMessage = (thankYouSetting?.value || 'ขอบคุณสำหรับการบริจาค')
+      .toString()
+      .trim() || 'ขอบคุณสำหรับการบริจาค';
+    const displayName = donation.display_name || 'ผู้บริจาค';
+    const projectName = project?.name || 'โปรเจกต์';
+    const thankYouFlex = lineService.createDonationThankYouFlex(
+      displayName,
+      amount,
+      project?.destination,
+      projectName,
+      thankYouMessage
+    );
+
+    res.json({ success: true, data: confirmed, thankYouFlex });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
