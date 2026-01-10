@@ -8,8 +8,8 @@ dotenv.config();
 const router = express.Router();
 
 const lineConfig = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || 'ArLvNdEmATxHy1fs11BeiCy7GQTKadN1MeArAFZx9ysafcxv4nKj3G2/OVtGWsvNRnVCHTgwSMQGoMtXkhQkIppn/ReI7uAp4LhlAm7YZEI/PjT1i8wZgQaRYGWTiL69UIktGarERFNMqCS4zDBY5AdB04t89/1O/w1cDnyilFU=',
-  channelSecret: process.env.LINE_CHANNEL_SECRET || '5d5ab200e92b3a8068907b49554a6d89',
+  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.LINE_CHANNEL_SECRET,
 };
 
 // Track processed webhook event IDs to prevent duplicate processing
