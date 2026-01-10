@@ -11,6 +11,18 @@ function DashboardPage({ onLogout }) {
   const [thankYouMessage, setThankYouMessage] = useState('');
   const [savingMessage, setSavingMessage] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const [projectForm, setProjectForm] = useState({
+    id: '',
+    name: '',
+    description: '',
+    destination: '',
+    goal_amount: '',
+    status: 'active',
+    promptpay_qr_url: '',
+  });
+  const [projectSaving, setProjectSaving] = useState(false);
+  const [projectStatus, setProjectStatus] = useState('');
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -124,6 +136,160 @@ function DashboardPage({ onLogout }) {
     loadDonations(projectId);
   };
 
+  const handleProjectFieldChange = (field, value) => {
+    setProjectForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleProjectUpload = async (file) => {
+    if (!file) return;
+    setProjectStatus('กำลังอัปโหลด...');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/admin/uploads/promptpay', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.success) {
+        setProjectForm(prev => ({ ...prev, promptpay_qr_url: data.url || '' }));
+        setProjectStatus('อัปโหลดสำเร็จ');
+      } else {
+        setProjectStatus('อัปโหลดไม่สำเร็จ');
+      }
+    } catch (err) {
+      setProjectStatus('อัปโหลดไม่สำเร็จ');
+    }
+  };
+
+  const resetProjectForm = () => {
+    setProjectForm({
+      id: '',
+      name: '',
+      description: '',
+      destination: '',
+      goal_amount: '',
+      status: 'active',
+      promptpay_qr_url: '',
+    });
+  };
+
+  const handleCreateProject = async (e) => {
+    e.preventDefault();
+    if (!projectForm.name.trim()) {
+      setProjectStatus('กรุณากรอกชื่อโปรเจกต์');
+      return;
+    }
+    setProjectSaving(true);
+    setProjectStatus('');
+    try {
+      const token = localStorage.getItem('adminToken');
+      const payload = {
+        name: projectForm.name.trim(),
+        description: projectForm.description.trim() || null,
+        destination: projectForm.destination.trim() || null,
+        goal_amount: projectForm.goal_amount ? parseFloat(projectForm.goal_amount) : null,
+        promptpay_qr_url: projectForm.promptpay_qr_url || null,
+      };
+      const response = await fetch('/api/admin/projects', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setProjectStatus('สร้างโปรเจกต์สำเร็จ');
+        resetProjectForm();
+        await loadProjects();
+      } else {
+        setProjectStatus('สร้างโปรเจกต์ไม่สำเร็จ');
+      }
+    } catch (err) {
+      setProjectStatus('สร้างโปรเจกต์ไม่สำเร็จ');
+    } finally {
+      setProjectSaving(false);
+    }
+  };
+
+  const handleEditProject = (project) => {
+    setProjectForm({
+      id: project._id || project.id || '',
+      name: project.name || '',
+      description: project.description || '',
+      destination: project.destination || '',
+      goal_amount: project.goal_amount ? project.goal_amount.toString() : '',
+      status: project.status || 'active',
+      promptpay_qr_url: project.promptpay_qr_url || '',
+    });
+    setProjectStatus('');
+  };
+
+  const handleUpdateProject = async (e) => {
+    e.preventDefault();
+    if (!projectForm.id) {
+      setProjectStatus('ไม่พบรหัสโปรเจกต์');
+      return;
+    }
+    setProjectSaving(true);
+    setProjectStatus('');
+    try {
+      const token = localStorage.getItem('adminToken');
+      const payload = {
+        name: projectForm.name.trim(),
+        description: projectForm.description.trim() || null,
+        destination: projectForm.destination.trim() || null,
+        goal_amount: projectForm.goal_amount ? parseFloat(projectForm.goal_amount) : null,
+        status: projectForm.status,
+        promptpay_qr_url: projectForm.promptpay_qr_url || null,
+      };
+      const response = await fetch(`/api/admin/projects/${projectForm.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setProjectStatus('อัปเดตโปรเจกต์สำเร็จ');
+        resetProjectForm();
+        await loadProjects();
+      } else {
+        setProjectStatus('อัปเดตโปรเจกต์ไม่สำเร็จ');
+      }
+    } catch (err) {
+      setProjectStatus('อัปเดตโปรเจกต์ไม่สำเร็จ');
+    } finally {
+      setProjectSaving(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    if (!window.confirm('ต้องการลบโปรเจกต์นี้?')) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/admin/projects/${projectId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data.success) {
+        setProjectStatus('ลบโปรเจกต์สำเร็จ');
+        await loadProjects();
+      } else {
+        setProjectStatus('ลบโปรเจกต์ไม่สำเร็จ');
+      }
+    } catch (err) {
+      setProjectStatus('ลบโปรเจกต์ไม่สำเร็จ');
+    }
+  };
+
   const filterDonationsByDateRange = () => {
     const start = new Date(startDate);
     start.setHours(0, 0, 0, 0);
@@ -209,7 +375,18 @@ function DashboardPage({ onLogout }) {
           Line Donation
         </div>
         <nav className="sidebar-nav">
-          <button className="nav-item active">Dashboard</button>
+          <button
+            className={`nav-item ${activeSection === 'dashboard' ? 'active' : ''}`}
+            onClick={() => setActiveSection('dashboard')}
+          >
+            Dashboard
+          </button>
+          <button
+            className={`nav-item ${activeSection === 'projects' ? 'active' : ''}`}
+            onClick={() => setActiveSection('projects')}
+          >
+            Projects
+          </button>
         </nav>
       </aside>
 
@@ -232,6 +409,8 @@ function DashboardPage({ onLogout }) {
         </header>
 
         <div className="dashboard-content">
+          {activeSection === 'dashboard' && (
+            <>
           <div className="page-header">
             <div>
               <h1>Admin Panel</h1>
@@ -382,7 +561,146 @@ function DashboardPage({ onLogout }) {
                     ))
                   )}
                 </tbody>
-              </table>
+            </table>
+          </div>
+        )}
+            </>
+          )}
+
+          {activeSection === 'projects' && (
+            <div className="projects-card">
+              <div className="settings-header">
+                <div>
+                  <h3>จัดการโปรเจกต์</h3>
+                  <p>สร้าง แก้ไข และลบโปรเจกต์จากแอดมินพาเนล</p>
+                </div>
+                {projectStatus && <span className="save-status">{projectStatus}</span>}
+              </div>
+              <form className="project-form" onSubmit={projectForm.id ? handleUpdateProject : handleCreateProject}>
+                <div className="form-grid">
+                  <div className="form-field">
+                    <label>ชื่อโปรเจกต์ *</label>
+                    <input
+                      type="text"
+                      value={projectForm.name}
+                      onChange={(e) => handleProjectFieldChange('name', e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label>ปลายทาง/ผู้รับ</label>
+                    <input
+                      type="text"
+                      value={projectForm.destination}
+                      onChange={(e) => handleProjectFieldChange('destination', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label>เป้าหมาย (บาท)</label>
+                    <input
+                      type="number"
+                      value={projectForm.goal_amount}
+                      onChange={(e) => handleProjectFieldChange('goal_amount', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label>สถานะ</label>
+                    <select
+                      value={projectForm.status}
+                      onChange={(e) => handleProjectFieldChange('status', e.target.value)}
+                    >
+                      <option value="active">active</option>
+                      <option value="inactive">inactive</option>
+                    </select>
+                  </div>
+                  <div className="form-field form-wide">
+                    <label>คำอธิบาย</label>
+                    <textarea
+                      rows="3"
+                      value={projectForm.description}
+                      onChange={(e) => handleProjectFieldChange('description', e.target.value)}
+                    />
+                  </div>
+                  <div className="form-field form-wide">
+                    <label>PromptPay QR (อัปโหลดรูป)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleProjectUpload(e.target.files?.[0])}
+                    />
+                    {projectForm.promptpay_qr_url && (
+                      <div className="qr-preview">
+                        <img src={projectForm.promptpay_qr_url} alt="PromptPay QR" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="form-actions">
+                  <button className="save-btn" type="submit" disabled={projectSaving}>
+                    {projectSaving
+                      ? 'กำลังบันทึก...'
+                      : projectForm.id
+                        ? 'บันทึกการแก้ไข'
+                        : 'สร้างโปรเจกต์'}
+                  </button>
+                  {projectForm.id && (
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      onClick={resetProjectForm}
+                      disabled={projectSaving}
+                    >
+                      ยกเลิก
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              <div className="projects-table">
+                <div className="table-container">
+                  <table className="donations-table">
+                    <thead>
+                      <tr>
+                        <th>ชื่อ</th>
+                        <th>ปลายทาง</th>
+                        <th>ยอดปัจจุบัน</th>
+                        <th>เป้าหมาย</th>
+                        <th>สถานะ</th>
+                        <th>จัดการ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {projects.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="no-data">ไม่มีข้อมูล</td>
+                        </tr>
+                      ) : (
+                        projects.map(project => (
+                          <tr key={project._id || project.id}>
+                            <td>{project.name}</td>
+                            <td>{project.destination || '-'}</td>
+                            <td>{(project.current_amount || 0).toLocaleString()} บาท</td>
+                            <td>{project.goal_amount ? `${project.goal_amount.toLocaleString()} บาท` : 'ไม่จำกัด'}</td>
+                            <td>
+                              <span className={`status-badge status-${project.status}`}>
+                                {project.status}
+                              </span>
+                            </td>
+                            <td className="action-cell">
+                              <button className="table-btn" onClick={() => handleEditProject(project)}>
+                                แก้ไข
+                              </button>
+                              <button className="table-btn danger" onClick={() => handleDeleteProject(project._id || project.id)}>
+                                ลบ
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
         </div>
