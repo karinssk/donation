@@ -62,8 +62,8 @@ export class LineService {
   }
 
   createProjectListFlex(projects: any[]): FlexMessage {
-    const bubbles: FlexBubble[] = projects.map(project => {
-      const goalRow = project.goal_amount
+    const bubbles: FlexBubble[] = projects.map((project): FlexBubble => {
+      const goalRow: FlexBox | null = project.goal_amount
         ? {
             type: 'box',
             layout: 'baseline',
