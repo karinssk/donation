@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      color-scheme: light;
+      --bg: #f3f6f4;
+      --bg-2: #eef2f0;
+      --card: #ffffff;
+      --text: #1b221d;
+      --muted: #5b6a5e;
+      --brand: #1db446;
+      --brand-2: #149b3b;
+      --accent: #f5c542;
+      --danger: #e5484d;
+      --border: #e3e9e3;
+      --shadow: 0 18px 36px rgba(18, 28, 20, 0.1);
+      --shadow-soft: 0 10px 20px rgba(18, 28, 20, 0.08);
+      --radius: 18px;
+    }
+    body {
+      font-family: "Kanit", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(72, 207, 129, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 85% 0%, rgba(96, 165, 250, 0.16) 0%, transparent 40%),
+        linear-gradient(160deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      padding: 16px;
+    }
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .header {
+      background: var(--card);
+      padding: 20px 22px;
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(27, 31, 27, 0.04);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      animation: riseIn 0.6s ease;
+    }
+    .header h1 {
+      color: var(--text);
+      font-size: 24px;
+      letter-spacing: 0.3px;
+      font-weight: 700;
+    }
+    #userInfo {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    #message {
+      margin-bottom: 6px;
+    }
+    #message.error,
+    #message.success {
+      box-shadow: var(--shadow-soft);
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 999px;
+      box-shadow: var(--shadow-soft);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      color: white;
+      box-shadow: 0 10px 20px rgba(29, 180, 70, 0.25);
+    }
+    .tab-content {
+      display: none;
+      animation: fadeSlide 0.4s ease;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .card {
+      background: var(--card);
+      padding: 18px 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(27, 31, 27, 0.04);
+      animation: riseIn 0.5s ease;
+    }
+    .card h3 {
+      color: var(--text);
+      margin-bottom: 12px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      background: #f9fbf9;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .form-group textarea {
+      min-height: 72px;
+      resize: vertical;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: rgba(29, 180, 70, 0.6);
+      box-shadow: 0 0 0 3px rgba(29, 180, 70, 0.14);
+      background: #ffffff;
+    }
+    .btn {
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      color: white;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      margin-right: 8px;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 18px rgba(29, 180, 70, 0.2);
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 22px rgba(29, 180, 70, 0.28);
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #f06264, #e5484d);
+      box-shadow: 0 10px 18px rgba(229, 72, 77, 0.2);
+    }
+    .btn-danger:hover {
+      box-shadow: 0 12px 22px rgba(229, 72, 77, 0.3);
+    }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #ffffff;
+    }
+    .table th,
+    .table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      vertical-align: top;
+    }
+    .table th {
+      background: #f4f7f4;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .table td {
+      word-break: break-word;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-success {
+      background: rgba(29, 180, 70, 0.15);
+      color: #166534;
+    }
+    .badge-warning {
+      background: rgba(245, 197, 66, 0.2);
+      color: #8a5a00;
+    }
+    .loading {
+      text-align: center;
+      padding: 28px;
+      color: var(--muted);
+    }
+    .error {
+      background: #fff1f2;
+      color: #b91c1c;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #fecdd3;
+    }
+    .success {
+      background: #e7f7ed;
+      color: #166534;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #bbf7d0;
+    }
+    @keyframes fadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @media (max-width: 900px) {
+      body {
+        padding: 12px;
+      }
+      .header {
+        padding: 16px;
+      }
+      .header h1 {
+        font-size: 20px;
+      }
+      .card {
+        padding: 14px;
+      }
+      .btn {
+        margin-bottom: 6px;
+      }
+      .table {
+        min-width: 620px;
+      }
+    }
+    @media (max-width: 640px) {
+      body {
+        padding: 10px;
+      }
+      .tabs {
+        gap: 6px;
+        padding: 4px;
+      }
+      .tab {
+        font-size: 13px;
+        padding: 8px 14px;
+      }
+      .btn {
+        width: 100%;
+        margin-right: 0;
+      }
+      .btn + .btn {
+        margin-top: 8px;
+      }
+      .table {
+        min-width: 560px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Admin Dashboard</h1>
+      <p id="userInfo">กำลังโหลด...</p>
+    </div>
+
+    <div id="message"></div>
+
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('projects')">โปรเจกต์</button>
+      <button class="tab" onclick="showTab('donations')">รายการบริจาค</button>
+      <button class="tab" onclick="showTab('keywords')">Keyword</button>
+      <button class="tab" onclick="showTab('settings')">ตั้งค่า</button>
+    </div>
+
+    <div id="projects" class="tab-content active">
+      <div class="card" id="projectCreateCard">
+        <h3>สร้างโปรเจกต์ใหม่</h3>
+        <form id="projectForm" onsubmit="createProject(event)">
+          <div class="form-group">
+            <label>ชื่อโปรเจกต์ *</label>
+            <input type="text" name="name" required>
+          </div>
+          <div class="form-group">
+            <label>คำอธิบาย</label>
+            <textarea name="description"></textarea>
+          </div>
+          <div class="form-group">
+            <label>ปลายทาง/ผู้รับ</label>
+            <input type="text" name="destination" placeholder="ระบุปลายทางหรือผู้รับ">
+          </div>
+          <div class="form-group">
+            <label>PromptPay QR (อัปโหลดรูป)</label>
+            <input type="file" name="promptpay_qr_file" accept="image/*">
+            <input type="hidden" name="promptpay_qr_url">
+            <small id="promptpayUploadStatusCreate"></small>
+            <div id="promptpayPreviewCreate" style="margin-top:10px;"></div>
+          </div>
+          <div class="form-group">
+            <label>เป้าหมาย (บาท)</label>
+            <input type="number" name="goal_amount" step="0.01">
+          </div>
+          <button type="submit" class="btn">สร้างโปรเจกต์</button>
+        </form>
+      </div>
+
+      <div class="card" id="projectEditCard" style="display:none;">
+        <h3>แก้ไขโปรเจกต์</h3>
+        <form id="projectEditForm" onsubmit="updateProject(event)">
+          <input type="hidden" name="id">
+          <div class="form-group">
+            <label>ชื่อโปรเจกต์ *</label>
+            <input type="text" name="name" required>
+          </div>
+          <div class="form-group">
+            <label>คำอธิบาย</label>
+            <textarea name="description"></textarea>
+          </div>
+          <div class="form-group">
+            <label>ปลายทาง/ผู้รับ</label>
+            <input type="text" name="destination" placeholder="ระบุปลายทางหรือผู้รับ">
+          </div>
+          <div class="form-group">
+            <label>PromptPay QR (อัปโหลดรูป)</label>
+            <input type="file" name="promptpay_qr_file" accept="image/*">
+            <input type="hidden" name="promptpay_qr_url">
+            <small id="promptpayUploadStatusEdit"></small>
+            <div id="promptpayPreviewEdit" style="margin-top:10px;"></div>
+          </div>
+          <div class="form-group">
+            <label>เป้าหมาย (บาท)</label>
+            <input type="number" name="goal_amount" step="0.01">
+          </div>
+          <div class="form-group">
+            <label>สถานะ</label>
+            <select name="status">
+              <option value="active">active</option>
+              <option value="inactive">inactive</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">บันทึกการแก้ไข</button>
+          <button type="button" class="btn btn-danger" onclick="cancelEditProject()">ยกเลิก</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>รายการโปรเจกต์</h3>
+        <div id="projectsList" class="loading">กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <div id="donations" class="tab-content">
+      <div class="card">
+        <h3>รายการบริจาค</h3>
+        <div class="form-group">
+          <label>กรองตามโปรเจกต์</label>
+          <select id="donationProjectFilter" onchange="loadDonations()">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+        <div id="donationsList" class="loading">กำลังโหลด...</div>
+      </div>
+    </div>
+
+
+    <div id="keywords" class="tab-content">
+      <div class="card" id="keywordCreateCard">
+        <h3>เพิ่ม Keyword</h3>
+        <form id="keywordForm" onsubmit="createKeyword(event)">
+          <div class="form-group">
+            <label>Keyword *</label>
+            <input type="text" name="keyword" required>
+          </div>
+          <div class="form-group">
+            <label>Action *</label>
+            <select name="action" required>
+              <option value="show_projects">show_projects (แสดงรายการโปรเจกต์)</option>
+              <option value="show_summary">show_summary (แสดงสรุปการบริจาค)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">เพิ่ม Keyword</button>
+        </form>
+      </div>
+
+      <div class="card" id="keywordEditCard" style="display:none;">
+        <h3>แก้ไข Keyword</h3>
+        <form id="keywordEditForm" onsubmit="updateKeyword(event)">
+          <input type="hidden" name="id">
+          <div class="form-group">
+            <label>Keyword *</label>
+            <input type="text" name="keyword" required>
+          </div>
+          <div class="form-group">
+            <label>Action *</label>
+            <select name="action" required>
+              <option value="show_projects">show_projects (แสดงรายการโปรเจกต์)</option>
+              <option value="show_summary">show_summary (แสดงสรุปการบริจาค)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>สถานะ</label>
+            <select name="is_active">
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+          <button type="submit" class="btn">บันทึกการแก้ไข</button>
+          <button type="button" class="btn btn-danger" onclick="cancelEditKeyword()">ยกเลิก</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>รายการ Keywords</h3>
+        <div id="keywordsList" class="loading">กำลังโหลด...</div>
+      </div>
+    </div>
+
+    <div id="settings" class="tab-content">
+      <div class="card">
+        <h3>ตั้งค่าระบบ</h3>
+        <form id="settingsForm" onsubmit="saveSettings(event)">
+          <div class="form-group">
+            <label>เวลาส่งสรุป (HH:MM)</label>
+            <input type="text" name="summary_time" id="summary_time" placeholder="19:00">
+          </div>
+          <div class="form-group">
+            <label>Group ID สำหรับส่งสรุป</label>
+            <input type="text" name="summary_group_id" id="summary_group_id">
+          </div>
+          <div class="form-group">
+            <label>ข้อความขอบคุณหลังยืนยันยอด</label>
+            <input type="text" name="thank_you_message" id="thank_you_message" placeholder="ขอบคุณสำหรับการบริจาค">
+          </div>
+          <button type="submit" class="btn">บันทึก</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let liff;
+    let userId;
+    let projectsCache = [];
+
+    async function initializeLiff() {
+      try {
+        liff = window.liff;
+        if (!liff) {
+          throw new Error('LIFF SDK not loaded');
+        }
+
+        const configResponse = await fetch('/api/config');
+        const configData = await configResponse.json();
+        const liffId = configData?.data?.liffId;
+
+        if (!liffId) {
+          throw new Error('LIFF_ID is not configured');
+        }
+
+        await liff.init({ liffId });
+
+        if (!liff.isLoggedIn()) {
+          window.location.href = '/admin/login';
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+
+        document.getElementById('userInfo').textContent = `สวัสดี ${profile.displayName} (${profile.userId})`;
+
+        await loadAllData();
+      } catch (error) {
+        showMessage('ไม่สามารถเริ่มต้นระบบได้: ' + error.message, 'error');
+      }
+    }
+
+    async function apiCall(url, options = {}) {
+      options.headers = {
+        ...options.headers,
+        'X-LINE-USERID': userId,
+        'Content-Type': 'application/json'
+      };
+
+      const response = await fetch(url, options);
+      return await response.json();
+    }
+
+    async function loadAllData() {
+      await Promise.all([
+        loadProjects(),
+        loadDonations(),
+        loadKeywords(),
+        loadSettings()
+      ]);
+    }
+
+    async function loadProjects() {
+      const data = await apiCall('/api/projects');
+
+      if (data.success) {
+        projectsCache = data.data || [];
+        let html = '<div class="table-wrap"><table class="table"><thead><tr><th>ชื่อ</th><th>ยอดปัจจุบัน</th><th>เป้าหมาย</th><th>QR</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>';
+
+        // Update project selects
+        const projectSelects = [
+          document.getElementById('donationProjectFilter'),
+          document.getElementById('expenseProjectSelect')
+        ];
+
+        projectSelects.forEach(select => {
+          if (select) {
+            const currentValue = select.value;
+            select.innerHTML = select.id === 'donationProjectFilter'
+              ? '<option value="">ทั้งหมด</option>'
+              : '<option value="">-- เลือกโปรเจกต์ --</option>';
+
+            projectsCache.forEach(project => {
+              const option = document.createElement('option');
+              option.value = project.id;
+              option.textContent = project.name;
+              select.appendChild(option);
+            });
+
+            select.value = currentValue;
+          }
+        });
+
+        projectsCache.forEach(project => {
+          html += `
+            <tr>
+              <td>${project.name}</td>
+              <td>${project.current_amount.toLocaleString()} บาท</td>
+              <td>${project.goal_amount ? project.goal_amount.toLocaleString() + ' บาท' : 'ไม่จำกัด'}</td>
+              <td>${project.promptpay_qr_url ? 'มี' : '-'}</td>
+              <td><span class="badge badge-${project.status === 'active' ? 'success' : 'warning'}">${project.status}</span></td>
+              <td>
+                <button class="btn" onclick="startEditProject('${project.id}')">แก้ไข</button>
+                <button class="btn btn-danger" onclick="deleteProject('${project.id}')">ลบ</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table></div>';
+        document.getElementById('projectsList').innerHTML = html;
+      }
+    }
+
+    async function loadDonations() {
+      const projectId = document.getElementById('donationProjectFilter')?.value || '';
+      const url = projectId ? `/api/admin/donations?project_id=${projectId}` : '/api/admin/donations';
+      const data = await apiCall(url);
+
+      if (data.success) {
+        let html = '<div class="table-wrap"><table class="table"><thead><tr><th>วันที่</th><th>ผู้บริจาค</th><th>ชื่อผู้รับบริจาค</th><th>จำนวน</th><th>สถานะ</th></tr></thead><tbody>';
+
+        data.data.forEach(donation => {
+          const date = new Date(donation.created_at).toLocaleString('th-TH');
+          const name = donation.is_anonymous ? 'ไม่ระบุชื่อ' : (donation.display_name || 'ผู้บริจาค');
+          const destination = donation.project_id?.destination || '-';
+          html += `
+            <tr>
+              <td>${date}</td>
+              <td>${name}</td>
+              <td>${destination}</td>
+              <td>${donation.amount_final?.toLocaleString() || '-'} บาท</td>
+              <td><span class="badge badge-${donation.status === 'confirmed' ? 'success' : 'warning'}">${donation.status}</span></td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table></div>';
+        document.getElementById('donationsList').innerHTML = html;
+      }
+    }
+
+    async function loadKeywords() {
+      const data = await apiCall('/api/admin/keywords');
+
+      if (data.success) {
+        keywordsCache = data.data;
+        let html = '<div class="table-wrap"><table class="table"><thead><tr><th>Keyword</th><th>Action</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>';
+
+        data.data.forEach(keyword => {
+          const statusBadge = keyword.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-warning">Inactive</span>';
+          html += `
+            <tr>
+              <td>${keyword.keyword}</td>
+              <td>${keyword.action}</td>
+              <td>${statusBadge}</td>
+              <td>
+                <button class="btn" onclick="startEditKeyword('${keyword._id}')">แก้ไข</button>
+                <button class="btn btn-danger" onclick="deleteKeyword('${keyword._id}')">ลบ</button>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table></div>';
+        document.getElementById('keywordsList').innerHTML = html;
+      }
+    }
+
+    async function loadSettings() {
+      const data = await apiCall('/api/admin/settings');
+
+      if (data.success) {
+        data.data.forEach(setting => {
+          const input = document.getElementById(setting.key);
+          if (input) {
+            input.value = setting.value;
+          }
+        });
+      }
+    }
+
+
+    async function createProject(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData);
+      const file = formData.get('promptpay_qr_file');
+
+      if (file && file.size > 0) {
+        const upload = await uploadPromptpayQr(file, 'promptpayUploadStatusCreate');
+        if (!upload) return;
+        data.promptpay_qr_url = upload;
+        renderPromptpayPreview('promptpayPreviewCreate', upload);
+      }
+
+      const payload = {
+        name: data.name,
+        description: data.description || null,
+        destination: data.destination || null,
+        promptpay_qr_url: data.promptpay_qr_url || null,
+        goal_amount: data.goal_amount ? parseFloat(data.goal_amount) : null
+      };
+
+      const result = await apiCall('/api/admin/projects', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      if (result.success) {
+        showMessage('สร้างโปรเจกต์สำเร็จ', 'success');
+        event.target.reset();
+        document.getElementById('promptpayUploadStatusCreate').textContent = '';
+        renderPromptpayPreview('promptpayPreviewCreate', '');
+        await loadProjects();
+      } else {
+        showMessage('เกิดข้อผิดพลาด: ' + result.error, 'error');
+      }
+    }
+
+    function startEditProject(projectId) {
+      const project = projectsCache.find(item => item.id === projectId);
+      if (!project) return;
+
+      const form = document.getElementById('projectEditForm');
+      form.elements.id.value = project.id;
+      form.elements.name.value = project.name || '';
+      form.elements.description.value = project.description || '';
+      form.elements.destination.value = project.destination || '';
+      form.elements.promptpay_qr_url.value = project.promptpay_qr_url || '';
+      form.elements.goal_amount.value = project.goal_amount || '';
+      form.elements.status.value = project.status || 'active';
+      document.getElementById('promptpayUploadStatusEdit').textContent = project.promptpay_qr_url
+        ? 'มี QR แล้ว'
+        : '';
+      renderPromptpayPreview('promptpayPreviewEdit', project.promptpay_qr_url);
+
+      document.getElementById('projectCreateCard').style.display = 'none';
+      document.getElementById('projectEditCard').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEditProject() {
+      const form = document.getElementById('projectEditForm');
+      form.reset();
+      form.elements.id.value = '';
+      document.getElementById('promptpayUploadStatusEdit').textContent = '';
+      renderPromptpayPreview('promptpayPreviewEdit', '');
+      document.getElementById('projectCreateCard').style.display = 'block';
+      document.getElementById('projectEditCard').style.display = 'none';
+    }
+
+    async function updateProject(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData);
+      const file = formData.get('promptpay_qr_file');
+
+      if (file && file.size > 0) {
+        const upload = await uploadPromptpayQr(file, 'promptpayUploadStatusEdit');
+        if (!upload) return;
+        data.promptpay_qr_url = upload;
+        renderPromptpayPreview('promptpayPreviewEdit', upload);
+      }
+
+      if (!data.id) {
+        showMessage('ไม่พบรหัสโปรเจกต์', 'error');
+        return;
+      }
+
+      const payload = {
+        name: data.name,
+        description: data.description || null,
+        destination: data.destination || null,
+        promptpay_qr_url: data.promptpay_qr_url || null,
+        goal_amount: data.goal_amount ? parseFloat(data.goal_amount) : null,
+        status: data.status
+      };
+
+      const result = await apiCall(`/api/admin/projects/${data.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+
+      if (result.success) {
+        showMessage('อัปเดตโปรเจกต์สำเร็จ', 'success');
+        cancelEditProject();
+        await loadProjects();
+      } else {
+        showMessage('เกิดข้อผิดพลาด: ' + result.error, 'error');
+      }
+    }
+
+    async function uploadPromptpayQr(file, statusElementId) {
+      const statusEl = document.getElementById(statusElementId);
+      statusEl.textContent = 'กำลังอัปโหลด...';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/admin/uploads/promptpay', {
+        method: 'POST',
+        headers: {
+          'X-LINE-USERID': userId
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        statusEl.textContent = '';
+        showMessage('อัปโหลดไม่สำเร็จ: ' + data.error, 'error');
+        return null;
+      }
+
+      statusEl.textContent = 'อัปโหลดสำเร็จ';
+      return data.url;
+    }
+
+    function renderPromptpayPreview(containerId, url) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      if (!url) {
+        container.innerHTML = '';
+        return;
+      }
+
+      container.innerHTML = `<img src="${url}" alt="PromptPay QR" style="max-width:180px; border:1px solid #eee; border-radius:8px;">`;
+    }
+
+    async function deleteProject(projectId) {
+      if (!confirm('ต้องการลบโปรเจกต์นี้? การลบจะลบข้อมูลที่เกี่ยวข้องด้วย')) return;
+
+      const result = await apiCall(`/api/admin/projects/${projectId}`, {
+        method: 'DELETE'
+      });
+
+      if (result.success) {
+        showMessage('ลบโปรเจกต์สำเร็จ', 'success');
+        await loadProjects();
+      } else {
+        showMessage('เกิดข้อผิดพลาด: ' + result.error, 'error');
+      }
+    }
+
+    async function createExpense(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData);
+
+      const result = await apiCall('/api/admin/expenses', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+
+      if (result.success) {
+        showMessage('บันทึกรายการจ่ายสำเร็จ', 'success');
+        event.target.reset();
+        await loadProjects();
+      } else {
+        showMessage('เกิดข้อผิดพลาด: ' + result.error, 'error');
+      }
+    }
+
+    async function createKeyword(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData);
+
+      const result = await apiCall('/api/admin/keywords', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+
+      if (result.success) {
+        showMessage('เพิ่ม Keyword สำเร็จ', 'success');
+        event.target.reset();
+        await loadKeywords();
+      } else {
+        showMessage('เกิดข้อผิดพลาด: ' + result.error, 'error');
+      }
+    }
+
+    async function deleteKeyword(id) {
+      if (!confirm('ต้องการลบ Keyword นี้?')) return;
+
+      const result = await apiCall(`/api/admin/keywords/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (result.success) {
+        showMessage('ลบ Keyword สำเร็จ', 'success');
+        await loadKeywords();
+      } else {
+        showMessage('เกิดข้อผิดพลาด: ' + result.error, 'error');
+      }
+    }
+
+    let keywordsCache = [];
+
+    async function startEditKeyword(keywordId) {
+      const keyword = keywordsCache.find(item => item._id === keywordId);
+      if (!keyword) {
+        await loadKeywords();
+        const keyword = keywordsCache.find(item => item._id === keywordId);
+        if (!keyword) return;
+      }
+
+      const form = document.getElementById('keywordEditForm');
+      form.elements.id.value = keyword._id;
+      form.elements.keyword.value = keyword.keyword || '';
+      form.elements.action.value = keyword.action || '';
+      form.elements.is_active.value = keyword.is_active ? 'true' : 'false';
+
+      document.getElementById('keywordCreateCard').style.display = 'none';
+      document.getElementById('keywordEditCard').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEditKeyword() {
+      const form = document.getElementById('keywordEditForm');
+      form.reset();
+      form.elements.id.value = '';
+      document.getElementById('keywordCreateCard').style.display = 'block';
+      document.getElementById('keywordEditCard').style.display = 'none';
+    }
+
+    async function updateKeyword(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData);
+
+      if (!data.id) {
+        showMessage('ไม่พบรหัส Keyword', 'error');
+        return;
+      }
+
+      const payload = {
+        keyword: data.keyword,
+        action: data.action,
+        is_active: data.is_active === 'true'
+      };
+
+      const result = await apiCall(`/api/admin/keywords/${data.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+
+      if (result.success) {
+        showMessage('อัปเดต Keyword สำเร็จ', 'success');
+        cancelEditKeyword();
+        await loadKeywords();
+      } else {
+        showMessage('เกิดข้อผิดพลาด: ' + result.error, 'error');
+      }
+    }
+
+    async function saveSettings(event) {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+
+      for (const [key, value] of formData.entries()) {
+        await apiCall(`/api/admin/settings/${key}`, {
+          method: 'PUT',
+          body: JSON.stringify({ value })
+        });
+      }
+
+      showMessage('บันทึกการตั้งค่าสำเร็จ', 'success');
+    }
+
+    function showTab(tabName) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+    }
+
+    function showMessage(message, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.className = type;
+      messageDiv.textContent = message;
+      setTimeout(() => {
+        messageDiv.className = '';
+        messageDiv.textContent = '';
+      }, 5000);
+    }
+
+    window.onload = initializeLiff;
+  </script>
+</body>
+</html>

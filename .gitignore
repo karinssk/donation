@@ -1,0 +1,37 @@
+# Node
+node_modules/
+admin-panel/node_modules/
+
+# Builds
+/dist/
+/admin-panel/dist/
+/public/admin-panel/assets/
+
+# Env & secrets
+.env
+.env.*
+*.pem
+*.key
+*.cert
+project001-*.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+/uploads/
+
+# Vite
+/admin-panel/.vite/
+
+# TypeScript
+*.tsbuildinfo

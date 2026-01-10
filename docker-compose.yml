@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=line_donation
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres123
+      - LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}
+      - LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET}
+      - LIFF_ID=${LIFF_ID}
+      - OCR_API_ENDPOINT=${OCR_API_ENDPOINT}
+      - OCR_API_KEY=${OCR_API_KEY}
+      - SUMMARY_TIME=19:00
+      - SUMMARY_GROUP_ID=${SUMMARY_GROUP_ID}
+    depends_on:
+      - postgres
+    volumes:
+      - ./uploads:/app/uploads
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=line_donation
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:

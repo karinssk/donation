@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบริจาค</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      color-scheme: light;
+      --bg: #f2f6f3;
+      --bg-2: #edf2ef;
+      --card: #ffffff;
+      --text: #1d241f;
+      --muted: #5b6a5e;
+      --brand: #1db446;
+      --brand-2: #149b3b;
+      --accent: #f5c542;
+      --border: #e0e6e1;
+      --shadow: 0 18px 32px rgba(18, 28, 20, 0.1);
+      --shadow-soft: 0 10px 22px rgba(18, 28, 20, 0.08);
+      --radius: 18px;
+    }
+    body {
+      font-family: "Kanit", "Segoe UI", Tahoma, sans-serif;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(29, 180, 70, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 90% 0%, rgba(96, 165, 250, 0.16) 0%, transparent 40%),
+        linear-gradient(160deg, var(--bg), var(--bg-2));
+      padding: 20px;
+      color: var(--text);
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 16px;
+    }
+    .header {
+      background: var(--card);
+      padding: 22px;
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(27, 31, 27, 0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: riseIn 0.6s ease;
+      grid-column: 1 / -1;
+    }
+    .header h1 {
+      color: var(--text);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .tabs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(27, 31, 27, 0.04);
+      align-self: start;
+      position: sticky;
+      top: 16px;
+    }
+    .tab {
+      width: 100%;
+      padding: 12px 14px;
+      background: #f7faf8;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+    .tab.active {
+      background: #111827;
+      color: white;
+      box-shadow: 0 10px 20px rgba(17, 24, 39, 0.2);
+    }
+    .tab-content {
+      display: none;
+      animation: fadeSlide 0.4s ease;
+      grid-column: 2;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .card {
+      background: var(--card);
+      padding: 20px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(27, 31, 27, 0.04);
+      margin-bottom: 14px;
+    }
+    .card h3 {
+      color: var(--text);
+      margin-bottom: 12px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .chart-total {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .chart-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .chart-item {
+      background: #f9fbf9;
+      border-radius: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(27, 31, 27, 0.04);
+    }
+    .chart-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .chart-bar {
+      height: 10px;
+      background: #e7efe8;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .chart-bar span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      border-radius: 999px;
+    }
+    .chart-sub {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .chart-item.is-clickable {
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .chart-item.is-clickable:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(18, 28, 20, 0.12);
+    }
+    .donor-list {
+      display: grid;
+      gap: 10px;
+    }
+    .donor-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #f9fbf9;
+      border: 1px solid rgba(27, 31, 27, 0.04);
+    }
+    .donor-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .donor-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .donor-date {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .donor-amount {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--brand);
+      white-space: nowrap;
+    }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .page-btn {
+      border: none;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: #111827;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .page-info {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #eef2ee;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .info-value {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .amount {
+      font-size: 22px;
+      color: var(--brand);
+      font-weight: 700;
+    }
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+    .error {
+      background: #fff1f2;
+      color: #b91c1c;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #fecdd3;
+      box-shadow: var(--shadow-soft);
+    }
+    .admin-btn {
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 12px 22px rgba(29, 180, 70, 0.2);
+    }
+    .admin-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(29, 180, 70, 0.28);
+    }
+    .donation-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #eef2ee;
+    }
+    .donation-item:last-child {
+      border-bottom: none;
+    }
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      margin-bottom: 15px;
+      background: #f9fbf9;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    select:focus {
+      outline: none;
+      border-color: rgba(29, 180, 70, 0.6);
+      box-shadow: 0 0 0 3px rgba(29, 180, 70, 0.14);
+      background: #fff;
+    }
+    @keyframes fadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes riseIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @media (max-width: 720px) {
+      body {
+        padding: 12px;
+      }
+      .container {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        padding: 16px;
+      }
+      .tabs {
+        position: static;
+        flex-direction: row;
+        overflow-x: auto;
+      }
+      .tab {
+        text-align: center;
+        min-width: 140px;
+      }
+      .tab-content {
+        grid-column: 1;
+      }
+      .tab {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>ระบบบริจาค</h1>
+      <p id="userInfo">กำลังโหลด...</p>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div class="tabs">
+      <button class="tab" onclick="showTab('transparency')">ความโปร่งใส</button>
+      <button class="tab active" onclick="showTab('totals')">ยอดรวมโครงการ</button>
+      <button class="tab" id="adminTab" onclick="showTab('admin')" style="display: none;">Admin</button>
+    </div>
+
+    <div id="transparency" class="tab-content">
+      <div class="card">
+        <label for="projectSelect">เลือกโปรเจกต์:</label>
+        <select id="projectSelect" onchange="loadProjectTransparency()">
+          <option value="">กำลังโหลด...</option>
+        </select>
+      </div>
+
+      <div id="transparencyData" class="loading">
+        เลือกโปรเจกต์เพื่อดูข้อมูล
+      </div>
+    </div>
+
+    <div id="totals" class="tab-content active">
+      <div class="card">
+        <div class="chart-header">
+          <h3>ยอดรวมโครงการ</h3>
+          <div id="totalsSum" class="chart-total">-</div>
+        </div>
+        <div id="totalsChart" class="chart-grid loading">กำลังโหลด...</div>
+      </div>
+      <div class="card">
+        <div class="chart-header">
+          <h3 id="donorTitle">รายชื่อผู้บริจาค</h3>
+          <div id="donorCount" class="chart-sub">-</div>
+        </div>
+        <div id="donorList" class="loading">เลือกโปรเจกต์เพื่อดูรายชื่อผู้บริจาค</div>
+        <div id="donorPagination" class="pagination"></div>
+      </div>
+    </div>
+
+    <div id="admin" class="tab-content">
+      <div class="card">
+        <h3>Admin Panel</h3>
+        <p>สำหรับผู้ดูแลระบบเท่านั้น</p>
+        <button class="admin-btn" onclick="location.href='/admin'">เปิด Admin Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let liff;
+    let userId;
+    let isAdmin = false;
+    let projectsCache = [];
+    let donorCache = [];
+    let donorPage = 1;
+    const donorPageSize = 10;
+    let selectedProjectDestination = '';
+
+    async function initializeLiff() {
+      try {
+        liff = window.liff;
+        if (!liff) {
+          throw new Error('LIFF SDK not loaded');
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const liffState = params.get('liff.state');
+        if (liffState === '/admin') {
+          window.location.replace('/admin/login');
+          return;
+        }
+
+        const configResponse = await fetch('/api/config');
+        const configData = await configResponse.json();
+        const liffId = configData?.data?.liffId;
+
+        if (!liffId) {
+          throw new Error('LIFF_ID is not configured');
+        }
+
+        await liff.init({ liffId });
+
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+
+        document.getElementById('userInfo').textContent = `สวัสดี ${profile.displayName}`;
+
+        await checkAdminStatus();
+        await loadProjects();
+      } catch (error) {
+        showError('ไม่สามารถเริ่มต้นระบบได้: ' + error.message);
+      }
+    }
+
+    async function checkAdminStatus() {
+      try {
+        const response = await fetch('/api/auth/check', {
+          headers: {
+            'X-LINE-USERID': userId
+          }
+        });
+        const data = await response.json();
+
+        if (data.success && data.isAdmin) {
+          isAdmin = true;
+          document.getElementById('adminTab').style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    }
+
+    async function loadProjects() {
+      try {
+        const response = await fetch('/api/projects');
+        const data = await response.json();
+
+        if (data.success) {
+          projectsCache = data.data || [];
+          const select = document.getElementById('projectSelect');
+          select.innerHTML = '<option value="">-- เลือกโปรเจกต์ --</option>';
+
+          projectsCache.forEach(project => {
+            const option = document.createElement('option');
+            option.value = project.id;
+            option.textContent = project.name;
+            select.appendChild(option);
+          });
+
+          if (projectsCache.length > 0) {
+            select.value = projectsCache[0].id;
+            loadProjectTransparency();
+          }
+          loadTotalsSummary();
+        }
+      } catch (error) {
+        showError('ไม่สามารถโหลดโปรเจกต์ได้: ' + error.message);
+      }
+    }
+
+    async function loadTotalsSummary() {
+      const chartEl = document.getElementById('totalsChart');
+      const totalEl = document.getElementById('totalsSum');
+      if (!chartEl || !totalEl) return;
+
+      if (projectsCache.length === 0) {
+        chartEl.classList.add('loading');
+        chartEl.textContent = 'ไม่พบโปรเจกต์';
+        totalEl.textContent = '-';
+        return;
+      }
+
+      chartEl.classList.add('loading');
+      chartEl.textContent = 'กำลังโหลด...';
+      totalEl.textContent = '-';
+
+      try {
+        const results = await Promise.all(projectsCache.map(async (project) => {
+          const response = await fetch(`/api/projects/${project.id}/transparency`);
+          const data = await response.json();
+          return {
+            id: project.id,
+            name: project.name,
+            totalIncome: data?.data?.totalIncome || 0,
+            balance: data?.data?.balance || 0
+          };
+        }));
+
+        const maxValue = Math.max(...results.map(item => item.totalIncome), 1);
+        const sumValue = results.reduce((sum, item) => sum + item.totalIncome, 0);
+        totalEl.textContent = `${sumValue.toLocaleString()} บาท`;
+
+        chartEl.classList.remove('loading');
+        chartEl.innerHTML = results.map(item => {
+          const width = Math.max(6, Math.round((item.totalIncome / maxValue) * 100));
+          return `
+            <div class="chart-item is-clickable" data-project-id="${item.id}" data-project-name="${item.name}">
+              <div class="chart-label">
+                <span>${item.name}</span>
+                <strong>${item.totalIncome.toLocaleString()} บาท</strong>
+              </div>
+              <div class="chart-bar">
+                <span style="width:${width}%"></span>
+              </div>
+              <div class="chart-sub">คงเหลือ ${item.balance.toLocaleString()} บาท</div>
+            </div>
+          `;
+        }).join('');
+
+        chartEl.querySelectorAll('.chart-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const projectId = item.dataset.projectId;
+            const projectName = item.dataset.projectName;
+            showProjectDonors(projectId, projectName);
+          });
+        });
+      } catch (error) {
+        chartEl.classList.add('loading');
+        chartEl.textContent = 'ไม่สามารถโหลดข้อมูลได้';
+        totalEl.textContent = '-';
+      }
+    }
+
+    async function showProjectDonors(projectId, projectName) {
+      const listEl = document.getElementById('donorList');
+      const titleEl = document.getElementById('donorTitle');
+      const countEl = document.getElementById('donorCount');
+      const paginationEl = document.getElementById('donorPagination');
+
+      if (!listEl || !titleEl || !countEl || !paginationEl) return;
+
+      const project = projectsCache.find(item => item.id === projectId);
+      selectedProjectDestination = project?.destination || '-';
+      titleEl.textContent = `รายชื่อผู้บริจาค · ${projectName}`;
+      countEl.textContent = `ปลายทาง: ${selectedProjectDestination}`;
+      paginationEl.innerHTML = '';
+      listEl.classList.add('loading');
+      listEl.classList.remove('donor-list');
+      listEl.textContent = 'กำลังโหลด...';
+      donorPage = 1;
+
+      try {
+        const response = await fetch(`/api/admin/donations?project_id=${projectId}&status=confirmed`);
+        const data = await response.json();
+        donorCache = data.data || [];
+        renderDonorPage();
+      } catch (error) {
+        listEl.classList.add('loading');
+        listEl.textContent = 'ไม่สามารถโหลดข้อมูลได้';
+        countEl.textContent = '-';
+      }
+    }
+
+    function renderDonorPage() {
+      const listEl = document.getElementById('donorList');
+      const countEl = document.getElementById('donorCount');
+      const paginationEl = document.getElementById('donorPagination');
+
+      if (!listEl || !countEl || !paginationEl) return;
+
+      const total = donorCache.length;
+      countEl.textContent = `ปลายทาง: ${selectedProjectDestination} · ทั้งหมด ${total.toLocaleString()} รายการ`;
+
+      if (total === 0) {
+        listEl.classList.add('loading');
+        listEl.classList.remove('donor-list');
+        listEl.textContent = 'ยังไม่มีรายการบริจาค';
+        paginationEl.innerHTML = '';
+        return;
+      }
+
+      const totalPages = Math.ceil(total / donorPageSize);
+      donorPage = Math.min(Math.max(1, donorPage), totalPages);
+      const start = (donorPage - 1) * donorPageSize;
+      const currentItems = donorCache.slice(start, start + donorPageSize);
+
+      listEl.classList.remove('loading');
+      listEl.classList.add('donor-list');
+      listEl.innerHTML = currentItems.map(donation => {
+        const name = donation.is_anonymous ? 'ผู้บริจาคไม่ระบุชื่อ' : (donation.display_name || 'ผู้บริจาค');
+        const date = new Date(donation.confirmed_at || donation.created_at).toLocaleDateString('th-TH');
+        const amount = (donation.amount_final || 0).toLocaleString();
+        return `
+          <div class="donor-row">
+            <div class="donor-meta">
+              <span class="donor-name">${name}</span>
+              <span class="donor-date">${date}</span>
+            </div>
+            <span class="donor-amount">${amount} บาท</span>
+          </div>
+        `;
+      }).join('');
+
+      if (totalPages <= 1) {
+        paginationEl.innerHTML = '';
+        return;
+      }
+
+      paginationEl.innerHTML = `
+        <button class="page-btn" onclick="changeDonorPage(${donorPage - 1})" ${donorPage === 1 ? 'disabled' : ''}>ก่อนหน้า</button>
+        <span class="page-info">${donorPage} / ${totalPages}</span>
+        <button class="page-btn" onclick="changeDonorPage(${donorPage + 1})" ${donorPage === totalPages ? 'disabled' : ''}>ถัดไป</button>
+      `;
+    }
+
+    function changeDonorPage(nextPage) {
+      donorPage = nextPage;
+      renderDonorPage();
+    }
+
+    async function loadProjectTransparency() {
+      const projectId = document.getElementById('projectSelect').value;
+
+      if (!projectId) {
+        document.getElementById('transparencyData').innerHTML = '<div class="loading">เลือกโปรเจกต์เพื่อดูข้อมูล</div>';
+        return;
+      }
+
+      document.getElementById('transparencyData').innerHTML = '<div class="loading">กำลังโหลด...</div>';
+
+      try {
+        const response = await fetch(`/api/projects/${projectId}/transparency`);
+        const result = await response.json();
+
+        if (result.success) {
+          const data = result.data;
+          let html = `
+            <div class="card">
+              <h3>${data.project.name}</h3>
+              <p>${data.project.description || ''}</p>
+            </div>
+
+            <div class="card">
+              <h3>สรุปยอดเงิน</h3>
+              <div class="info-row">
+                <span class="info-label">ยอดรวมรับเข้า:</span>
+                <span class="amount">${data.totalIncome.toLocaleString()} บาท</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">คงเหลือ:</span>
+                <span class="amount">${data.balance.toLocaleString()} บาท</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>รายการบริจาคล่าสุด</h3>
+              ${data.recentDonations.length === 0 ? '<p>ยังไม่มีรายการบริจาค</p>' : ''}
+          `;
+
+          data.recentDonations.forEach(donation => {
+            const displayName = donation.is_anonymous ? 'ผู้บริจาคไม่ระบุชื่อ' : (donation.display_name || 'ผู้บริจาค');
+            const date = new Date(donation.confirmed_at).toLocaleDateString('th-TH');
+            html += `
+              <div class="donation-item">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>${displayName}</span>
+                  <span style="color: #1DB446; font-weight: bold;">${donation.amount_final.toLocaleString()} บาท</span>
+                </div>
+                <div style="color: #666; font-size: 12px;">${date}</div>
+              </div>
+            `;
+          });
+
+          html += '</div>';
+
+          document.getElementById('transparencyData').innerHTML = html;
+        } else {
+          showError('ไม่สามารถโหลดข้อมูลได้');
+        }
+      } catch (error) {
+        showError('เกิดข้อผิดพลาด: ' + error.message);
+      }
+    }
+
+    function showTab(tabName) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      event.target.classList.add('active');
+      document.getElementById(tabName).classList.add('active');
+    }
+
+    function showError(message) {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+      setTimeout(() => {
+        errorDiv.style.display = 'none';
+      }, 5000);
+    }
+
+    window.onload = initializeLiff;
+  </script>
+</body>
+</html>
