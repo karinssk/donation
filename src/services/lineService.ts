@@ -183,122 +183,52 @@ export class LineService {
     donationId: string,
     projectName: string,
     amount: number,
-    isManual: boolean = false,
-    showEditButton: boolean = true
+    isManual: boolean = false
   ): FlexMessage {
-    const footerButtons: any[] = [];
-
-    // Only add edit button if showEditButton is true
-    if (showEditButton) {
-      footerButtons.push({
-        type: 'button',
-        style: 'link',
-        height: 'sm',
-        action: {
-          type: 'uri',
-          label: 'กรอกยอดเงิน',
-          uri: `${process.env.ADMIN_BASE_URL}/edit-amount/?donation_id=${donationId}`,
-        },
-      });
-    }
+    const bubble: FlexBubble = {
+      type: 'bubble',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: isManual ? 'กรุณายืนยันยอดเงิน' : 'ระบบอ่านสลิปได้',
+            weight: 'bold',
+            size: 'lg',
+            color: '#1DB446',
+          },
+        ],
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: `โปรเจกต์: ${(projectName || '').trim()}`,
+            wrap: true,
+            size: 'md',
+            margin: 'md',
+          },
+          {
+            type: 'text',
+            text: `ยอดรวม: ${amount.toLocaleString()} บาท`,
+            wrap: true,
+            size: 'xl',
+            weight: 'bold',
+            color: '#1DB446',
+            margin: 'md',
+          },
+        ],
+      },
+    };
 
     return {
       type: 'flex',
       altText: 'ยืนยันการบริจาค',
       contents: {
-        type: 'bubble',
-        header: {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: isManual ? 'กรุณายืนยันยอดเงิน' : 'ระบบอ่านสลิปได้',
-              weight: 'bold',
-              size: 'lg',
-              color: '#1DB446',
-            },
-          ],
-        },
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: `โปรเจกต์: ${(projectName || '').trim()}`,
-              wrap: true,
-              size: 'md',
-              margin: 'md',
-            },
-            {
-              type: 'text',
-              text: `ยอดรวม: ${amount.toLocaleString()} บาท`,
-              wrap: true,
-              size: 'xl',
-              weight: 'bold',
-              color: '#1DB446',
-              margin: 'md',
-            },
-          ],
-        },
-        footer: {
-          type: 'box',
-          layout: 'vertical',
-          spacing: 'sm',
-          contents: footerButtons,
-        },
-      },
-    };
-  }
-
-  createAmountInputFlex(
-    donationId: string,
-    projectName: string
-  ): FlexMessage {
-    return {
-      type: 'flex',
-      altText: 'ระบุจำนวนเงินบริจาค',
-      contents: {
-        type: 'bubble',
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: 'กรุณาระบุจำนวนเงิน',
-              weight: 'bold',
-              size: 'lg',
-              color: '#1DB446',
-            },
-            {
-              type: 'text',
-              text: `โปรเจกต์: ${(projectName || '').trim()}`,
-              wrap: true,
-              size: 'sm',
-              color: '#666666',
-              margin: 'md',
-            },
-          ],
-        },
-        footer: {
-          type: 'box',
-          layout: 'vertical',
-          spacing: 'sm',
-          contents: [
-            {
-              type: 'button',
-              style: 'primary',
-              height: 'sm',
-              action: {
-                type: 'uri',
-                label: 'กรอกยอดเงิน',
-                uri: `${process.env.ADMIN_BASE_URL}/edit-amount/?donation_id=${donationId}`,
-              },
-            },
-          ],
-        },
+        ...bubble,
       },
     };
   }

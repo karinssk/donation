@@ -6,9 +6,7 @@ import { Request } from 'express';
 import projectService from '../services/projectService';
 import donationService from '../services/donationService';
 import expenseService from '../services/expenseService';
-import adminService from '../services/adminService';
 import lineService from '../services/lineService';
-import userStateService from '../services/userStateService';
 import Donation from '../models/Donation';
 import Keyword from '../models/Keyword';
 import Setting from '../models/Setting';
@@ -350,85 +348,6 @@ router.put('/admin/settings/:key', async (req: Request, res) => {
     );
 
     res.json({ success: true, data: updated });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Public donation endpoints (for LIFF)
-
-// Get donation by ID (for LIFF edit amount page)
-router.get('/donations/:id', async (req: Request, res) => {
-  try {
-    const id = req.params.id;
-    const donation = await donationService.getDonation(id);
-
-    if (!donation) {
-      return res.status(404).json({ success: false, error: 'Donation not found' });
-    }
-
-    res.json({ success: true, data: donation });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Update donation amount (for LIFF edit amount)
-router.put('/donations/:id/amount', async (req: Request, res) => {
-  try {
-    const id = req.params.id;
-    const { amount, recipient_name } = req.body;
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ success: false, error: 'Valid amount is required' });
-    }
-
-    const donation = await donationService.getDonation(id);
-    if (!donation) {
-      return res.status(404).json({ success: false, error: 'Donation not found' });
-    }
-    if (donation.status === 'confirmed') {
-      return res.status(409).json({ success: false, error: 'Donation already confirmed' });
-    }
-
-    const confirmed = await donationService.confirmDonation(id, amount, recipient_name);
-    if (!confirmed) {
-      return res.status(500).json({ success: false, error: 'Failed to confirm donation' });
-    }
-
-    const project = await projectService.getProject(donation.project_id);
-    await userStateService.clearState(donation.line_user_id, donation.source_id);
-
-    // Get LINE user display name
-    let displayName = 'ผู้บริจาค';
-    try {
-      const profile = await lineService.getProfile(donation.line_user_id);
-      displayName = profile.displayName || donation.display_name || 'ผู้บริจาค';
-    } catch (profileError) {
-      displayName = donation.display_name || 'ผู้บริจาค';
-    }
-
-    const thankYouSetting = await Setting.findOne({ key: 'thank_you_message' }).lean();
-    const thankYouMessage = (thankYouSetting?.value || 'ขอบคุณสำหรับการบริจาค')
-      .toString()
-      .trim() || 'ขอบคุณสำหรับการบริจาค';
-    const projectName = project?.name || 'โปรเจกต์';
-
-    try {
-      await lineService.pushMessage(donation.line_user_id, [
-        lineService.createDonationThankYouFlex(
-          displayName,
-          amount,
-          project?.destination,
-          projectName,
-          thankYouMessage
-        ),
-      ]);
-    } catch (sendError) {
-      console.error('Failed to send confirmation message:', sendError);
-    }
-
-    res.json({ success: true, data: confirmed });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

@@ -30,9 +30,6 @@ app.use(express.urlencoded({ extended: true }));
 const publicRoot = path.join(__dirname, '../public');
 
 app.use(express.static(publicRoot));
-app.get('/edit-amount', (_req, res) => {
-  res.sendFile(path.join(publicRoot, 'edit-amount', 'index.html'));
-});
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Serve admin panel assets

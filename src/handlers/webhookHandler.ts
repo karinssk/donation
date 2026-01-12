@@ -90,19 +90,69 @@ export class WebhookHandler {
     // Check if user is in a flow (waiting for amount input)
     const userState = await userStateService.getState(userId, sourceId);
     if (userState && userState.state === 'waiting_confirmation') {
-      // User might be typing a custom amount
-      const amount = parseFloat(text);
-      if (!isNaN(amount) && amount > 0) {
-        // Update the donation with manual amount
-        // This is a fallback - normally they'd use LIFF
+      const amount = Number(text.replace(/,/g, ''));
+      if (Number.isNaN(amount) || amount <= 0) {
         await this.sendReplyMessage(replyToken, sourceId, [
-          {
-            type: 'text',
-            text: 'กรุณาใช้ปุ่ม "ยืนยัน" หรือ "แก้ไขยอดเงิน" ด้านบน',
-          },
+          { type: 'text', text: 'กรุณากรอกยอดเงินในการบริจาค เช่น 100' },
         ]);
         return;
       }
+
+      const donation = await Donation.findOne({
+        line_user_id: userId,
+        source_id: sourceId,
+        project_id: userState.pending_project_id,
+        status: 'waiting_confirmation',
+      })
+        .sort({ created_at: -1 })
+        .lean();
+
+      if (!donation) {
+        await this.sendReplyMessage(replyToken, sourceId, [
+          { type: 'text', text: 'ไม่พบข้อมูลการบริจาคที่รอการยืนยัน' },
+        ]);
+        return;
+      }
+
+      const confirmed = await donationService.confirmDonation(
+        donation._id.toString(),
+        amount
+      );
+
+      if (!confirmed) {
+        await this.sendReplyMessage(replyToken, sourceId, [
+          { type: 'text', text: 'เกิดข้อผิดพลาดในการยืนยันการบริจาค' },
+        ]);
+        return;
+      }
+
+      const project = await projectService.getProject(donation.project_id.toString());
+      const thankYouSetting = await Setting.findOne({ key: 'thank_you_message' }).lean();
+      const thankYouMessage = (thankYouSetting?.value || 'ขอบคุณสำหรับการบริจาค')
+        .toString()
+        .trim() || 'ขอบคุณสำหรับการบริจาค';
+
+      let displayName = 'ผู้บริจาค';
+      try {
+        const profile = await lineService.getProfile(userId);
+        displayName = profile.displayName || donation.display_name || 'ผู้บริจาค';
+      } catch (profileError) {
+        displayName = donation.display_name || 'ผู้บริจาค';
+      }
+
+      const projectName = project?.name || 'โปรเจกต์';
+      await this.sendReplyMessage(replyToken, sourceId, [
+        lineService.createDonationThankYouFlex(
+          displayName,
+          amount,
+          project?.destination,
+          projectName,
+          thankYouMessage
+        ),
+      ]);
+
+      await userStateService.clearState(userId, sourceId);
+      return;
     }
 
     // Default response disabled to avoid interrupting user chat.
@@ -183,10 +233,7 @@ export class WebhookHandler {
       const project = await projectService.getProject(userState.pending_project_id);
 
       await this.sendReplyMessage(replyToken, sourceId, [
-        lineService.createAmountInputFlex(
-          donation.id,
-          project?.name || 'โปรเจกต์'
-        ),
+        { type: 'text', text: 'กรุณากรอกยอดเงินในการบริจาค เช่น 100' },
       ]);
 
       // Download and attach slip in the background (no extra reply/push).
