@@ -537,7 +537,7 @@ export class LineService {
             },
             {
               type: 'button',
-              style: 'link',
+              style: 'primary',
               height: 'sm',
               action: {
                 type: 'uri',
