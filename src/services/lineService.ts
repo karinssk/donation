@@ -159,7 +159,7 @@ export class LineService {
           contents: [
             {
               type: 'button',
-              style: 'link',
+              style: 'primary',
               height: 'sm',
               action: {
                 type: 'postback',
@@ -380,7 +380,7 @@ export class LineService {
             },
             {
               type: 'button',
-              style: 'link',
+              style: 'primary',
               height: 'sm',
               action: {
                 type: 'uri',
