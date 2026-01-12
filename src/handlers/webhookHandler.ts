@@ -139,6 +139,11 @@ export class WebhookHandler {
       } catch (profileError) {
         displayName = donation.display_name || 'ผู้บริจาค';
       }
+      if (displayName && displayName !== donation.display_name) {
+        await donationService.updateDonation(donation._id.toString(), {
+          display_name: displayName,
+        });
+      }
 
       const projectName = project?.name || 'โปรเจกต์';
       await this.sendReplyMessage(replyToken, sourceId, [
@@ -219,11 +224,19 @@ export class WebhookHandler {
         return;
       }
 
+      let displayName = 'ผู้บริจาค';
+      try {
+        const profile = await lineService.getProfile(userId);
+        displayName = profile.displayName || displayName;
+      } catch (profileError) {
+        displayName = 'ผู้บริจาค';
+      }
+
       // Create donation record quickly to reply fast.
       const donation = await donationService.createDonation({
         projectId: userState.pending_project_id,
         lineUserId: userId,
-        displayName: 'ผู้บริจาค',
+        displayName,
         sourceType,
         sourceId,
         slipImageUrl: '',
@@ -379,6 +392,9 @@ export class WebhookHandler {
         displayName = profile.displayName || donation.display_name || 'ผู้บริจาค';
       } catch (profileError) {
         displayName = donation.display_name || 'ผู้บริจาค';
+      }
+      if (displayName && displayName !== donation.display_name) {
+        await donationService.updateDonation(donationId, { display_name: displayName });
       }
 
       const projectName = project?.name || 'โปรเจกต์';

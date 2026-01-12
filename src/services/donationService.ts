@@ -40,6 +40,7 @@ export class DonationService {
   ): Promise<DonationType | null> {
     const updateData: any = {};
 
+    if (data.display_name !== undefined) updateData.display_name = data.display_name;
     if (data.amount_ocr !== undefined) updateData.amount_ocr = data.amount_ocr;
     if (data.amount_final !== undefined) updateData.amount_final = data.amount_final;
     if (data.slip_image_url !== undefined) updateData.slip_image_url = data.slip_image_url;
